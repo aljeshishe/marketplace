@@ -1,7 +1,8 @@
 import re
 import scrapy
+from loguru import logger
+from tqdm import tqdm
 
-# todo remote m2 from Property area                                                                                                     100 m²
 
 def getall(response, selector, replace=None):
     result = response.css(selector).getall()
@@ -34,15 +35,16 @@ def get(response, selector, type=str, replace=None):
 class PropertySpider(scrapy.Spider):
     name = "property_spider"
 
-    def __init__(self, url=None, debug=False, *args, **kwargs):
+    def __init__(self, urls: str, fast=False, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.start_url = url
-        self.debug = int(debug)
+        self.start_urls = urls.split(",")
+        self.fast = int(fast)
+        self.pb = tqdm(desc="Crawling Pages", unit="page", total=0) 
 
-    
     def start_requests(self):
-        yield scrapy.Request(self.start_url, self.parse)
-    
+        for url in self.start_urls:
+            logger.info(f"Starting to scrape {url}")
+            yield scrapy.Request(url, self.parse)
     
     def parse(self, response):
         """
@@ -50,11 +52,9 @@ class PropertySpider(scrapy.Spider):
         """
         # Extract the maximum page number
         pages = response.css("a.page-number::attr(data-page)").getall()
-        max_page_number = max(map(int, pages)) + 1 if pages else 1
-        if self.debug:
-            max_page_number = 2
+        max_page_number = max(map(int, pages)) + 1 if pages and not self.fast else 2
         for page_number in range(1, max_page_number):
-            url = f"{self.start_url}?page={page_number}"
+            url = f"{response.url}?page={page_number}"
             yield scrapy.Request(url=url, callback=self.parse_list_page)
        
         yield from self.parse_list_page(response)
@@ -62,8 +62,9 @@ class PropertySpider(scrapy.Spider):
     
     def parse_list_page(self, response):
         for url in response.css("a[class='mask']::attr(href)").getall():
+            self.pb.total += 1
+            self.pb.refresh()
             yield response.follow(url, callback=self.parse_page)
-            # yield scrapy.Request(url=f"{self.prefix}/{url}", callback=self.parse_page)
 
     def parse_page(self, response):
         """
@@ -82,11 +83,27 @@ class PropertySpider(scrapy.Spider):
             "views": get(response, "span[class='counter-views']::text", replace="Views:", type=int),
             "lat": get(response, "div[id='geoMap']::attr(data-default-lat)"),
             "lng": get(response, "div[id='geoMap']::attr(data-default-lng)"),
-            "description": "\n".join(getall(response, "div.js-description > *::text")),
-            "images": getall(response, "img[class='announcement__thumbnails-item js-select-image']::attr(src)"),
+            "sold": bool(get(response, ".phone-author--sold")),
         }
         
+        categories = getall(response, "span[itemprop='name']::text")
+        categories_map = {f"cat{i}": cat for i, cat in enumerate(categories[1:])}
+        data.update(categories_map)
+            
         keys = getall(response, "div[class='announcement-characteristics clearfix'] [class='key-chars']::text", replace=":")
-        values = getall(response, "div[class='announcement-characteristics clearfix'] [class='value-chars']::text")
+        values = getall(response, "div[class='announcement-characteristics clearfix'] [class='value-chars']::text", replace="m²")
         data.update(zip(keys, values))
+        
+        long_data = {
+            "images": getall(response, "img[class='announcement__thumbnails-item js-select-image']::attr(src)"),
+            "description": "\n".join(getall(response, "div.js-description > *::text"))
+        }
+        data.update(long_data)
+        
+        self.pb.update(1)
         return data
+    
+    def closed(self, reason):  
+        # Close the progress bar when the spider finishes  
+        if self.pb:  
+            self.pb.close()     

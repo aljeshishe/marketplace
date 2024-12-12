@@ -90,3 +90,51 @@ ITEM_PIPELINES = {
 # Set settings whose default value is deprecated to a future-proof value
 TWISTED_REACTOR = "twisted.internet.asyncioreactor.AsyncioSelectorReactor"
 FEED_EXPORT_ENCODING = "utf-8"
+
+
+
+import logging  
+
+# Scrapy settings for logging  
+LOG_ENABLED = True  
+LOG_LEVEL = 'DEBUG'  # Set the base log level to DEBUG  
+
+# Custom logging configuration  
+LOG_FILE = 'debug.log'  # File to store debug logs  
+
+# Configure logging  
+from logging.handlers import RotatingFileHandler  
+
+LOGGING = {  
+    'version': 1,  
+    'disable_existing_loggers': False,  
+    'formatters': {  
+        'default': {  
+            'format': '%(asctime)s [%(name)s] %(levelname)s: %(message)s',  
+        },  
+    },  
+    'handlers': {  
+        'console': {  
+            'level': 'INFO',  
+            'class': 'logging.StreamHandler',  
+            'formatter': 'default',  
+        },  
+        'file': {  
+            'level': 'DEBUG',  
+            'class': 'logging.handlers.RotatingFileHandler',  
+            'formatter': 'default',  
+            'filename': 'output/logs/debug.log',  # File to store debug logs  
+            'maxBytes': 10 * 1024 * 1024,  # 10 MB per log file  
+            'backupCount': 5,  # Keep up to 5 backup files  
+        },  
+    },  
+    'loggers': {  
+        'scrapy': {  
+            'handlers': ['console', 'file'],  
+            'level': 'DEBUG',  
+            'propagate': True,  
+        },  
+    },  
+}  
+from pathlib import Path
+Path(LOGGING["handlers"]["file"]["filename"]).parent.mkdir(parents=True, exist_ok=True)

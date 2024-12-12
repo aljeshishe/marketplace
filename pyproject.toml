@@ -14,6 +14,8 @@ plotly = "^5.24.1"
 nbformat = "^5.10.4"
 dtale = "^3.16.0"
 kaleido = "0.2.1"
+loguru = "^0.7.3"
+tqdm = "^4.67.1"
 
 
 [tool.poetry.group.dev.dependencies]

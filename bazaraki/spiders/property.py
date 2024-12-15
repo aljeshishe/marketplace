@@ -44,9 +44,9 @@ class PropertySpider(scrapy.Spider):
     def start_requests(self):
         for url in self.start_urls:
             logger.info(f"Starting to scrape {url}")
-            yield scrapy.Request(url, self.parse)
+            yield scrapy.Request(url, self.parse_start_page, priority=10)
     
-    def parse(self, response):
+    def parse_start_page(self, response):
         """
         Parse the initial page to find the maximum page number.
         """
@@ -55,7 +55,7 @@ class PropertySpider(scrapy.Spider):
         max_page_number = max(map(int, pages)) + 1 if pages and not self.fast else 2
         for page_number in range(1, max_page_number):
             url = f"{response.url}?page={page_number}"
-            yield scrapy.Request(url=url, callback=self.parse_list_page)
+            yield scrapy.Request(url=url, callback=self.parse_list_page, priority=10)
        
         yield from self.parse_list_page(response)
 
@@ -64,7 +64,7 @@ class PropertySpider(scrapy.Spider):
         for url in response.css("a[class='mask']::attr(href)").getall():
             self.pb.total += 1
             self.pb.refresh()
-            yield response.follow(url, callback=self.parse_page)
+            yield response.follow(url, callback=self.parse_page, priority=0)
 
     def parse_page(self, response):
         """

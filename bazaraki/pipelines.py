@@ -13,8 +13,9 @@ class BazarakiPipeline:
     def open_spider(self, spider):
         path = "_".join(urlparse(url).path.replace("/", "") for url in spider.start_urls)
         now = datetime.now(tz=timezone.utc)
+        now_str = datetime.now().isoformat(sep=" ", timespec="seconds")
         fast_prefix = "fast_" if spider.fast else ""
-        file_name = f"output/{now:%Y%m%d_%H%M%S}_{fast_prefix}{escape(path)}.jsonl"
+        file_name = f"output/{now_str} {fast_prefix}{escape(path)}.jsonl"
         self.file_path = Path(file_name)
         self.file_path.parent.mkdir(parents=True, exist_ok=True)
         logger.info(f"Writing to {self.file_path}")

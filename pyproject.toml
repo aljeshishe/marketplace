@@ -16,6 +16,9 @@ dtale = "^3.16.0"
 kaleido = "0.2.1"
 loguru = "^0.7.3"
 tqdm = "^4.67.1"
+swifter = "^1.4.0"
+datacompy = "^0.14.4"
+parse = "^1.20.2"
 
 
 [tool.poetry.group.dev.dependencies]

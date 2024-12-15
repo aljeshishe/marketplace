@@ -1,6 +1,5 @@
 import re
 import scrapy
-from loguru import logger
 from tqdm import tqdm
 
 
@@ -43,7 +42,7 @@ class PropertySpider(scrapy.Spider):
 
     def start_requests(self):
         for url in self.start_urls:
-            logger.info(f"Starting to scrape {url}")
+            self.logger.info(f"Starting to scrape {url}")
             yield scrapy.Request(url, self.parse_start_page, priority=10)
     
     def parse_start_page(self, response):

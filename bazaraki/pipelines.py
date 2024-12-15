@@ -4,7 +4,7 @@ import re
 import json
 from urllib.parse import urlparse
 from itemadapter import ItemAdapter
-from loguru import logger
+
 
 def escape(s):
     return re.sub(r'[^a-zA-Z0-9_-]', '_', s)
@@ -18,7 +18,7 @@ class BazarakiPipeline:
         file_name = f"output/{now_str} {fast_prefix}{escape(path)}.jsonl"
         self.file_path = Path(file_name)
         self.file_path.parent.mkdir(parents=True, exist_ok=True)
-        logger.info(f"Writing to {self.file_path}")
+        spider.logger.info(f"Writing to {self.file_path}")
         self.file = self.file_path.open("w")
 
     def close_spider(self, spider):

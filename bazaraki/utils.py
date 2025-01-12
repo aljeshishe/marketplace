@@ -2,5 +2,5 @@ import pandas as pd
 
 def filter_in(df, query: str) -> pd.DataFrame:
     found = df.query(query)
-    print(f"removing {len(df) - len(found)} rows")
+    print(f"removing {len(df) - len(found)}/{len(df)} rows")
     return found

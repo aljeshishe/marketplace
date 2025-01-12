@@ -12,17 +12,17 @@ def escape(s):
 class BazarakiPipeline:
     def open_spider(self, spider):
         path = "_".join(urlparse(url).path.replace("/", "") for url in spider.start_urls)
-        now = datetime.now(tz=timezone.utc)
         now_str = datetime.now().isoformat(sep=" ", timespec="seconds")
         fast_prefix = "fast_" if spider.fast else ""
-        file_name = f"output/{now_str} {fast_prefix}{escape(path)}.jsonl"
-        self.file_path = Path(file_name)
+        self.file_path = Path(f"output/{now_str} {fast_prefix}{escape(path)}.jsonl_")
         self.file_path.parent.mkdir(parents=True, exist_ok=True)
-        spider.logger.info(f"Writing to {self.file_path}")
         self.file = self.file_path.open("w")
+        spider.logger.info(f"Writing to {self.file_path}")
 
     def close_spider(self, spider):
         self.file.close()
+        self.file_path.rename(self.file_path.with_suffix(".jsonl"))
+        
 
     def process_item(self, item, spider):
         line = json.dumps(ItemAdapter(item).asdict()) + "\n"

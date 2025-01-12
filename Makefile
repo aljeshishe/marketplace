@@ -10,3 +10,8 @@ fast:
 .PHONY: sync
 sync:
 	aws s3 sync output s3://ab-users/grachev/bazaraki/output
+
+.PHONY: syncback
+syncback:
+	aws s3 sync s3://ab-users/grachev/bazaraki/output output 
+

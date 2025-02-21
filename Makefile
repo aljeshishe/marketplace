@@ -6,7 +6,8 @@ crawl:
 
 .PHONY: fast
 fast:
-	scrapy crawl property_spider -a  urls=https://www.facebook.com/marketplace/108107325884650/search/?query=mini -a fast=1
+	scrapy crawl property_spider -a  urls='https://www.facebook.com/marketplace/108107325884650/vehicles' -a fast=1
+	scrapy crawl property_spider -a  urls='https://www.facebook.com/marketplace/108107325884650/search/?query=mini' -a fast=1
 
 .PHONY: sync
 sync:

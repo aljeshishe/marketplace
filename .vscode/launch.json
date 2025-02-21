@@ -5,9 +5,10 @@
             "name": "Python Debugger: Current File with Arguments",
             "type": "debugpy",
             "request": "launch",
-            "program": "/home/ubuntu/bazaraki/.venv/bin/scrapy",
+            "program": ".venv/bin/scrapy",
             "console": "integratedTerminal",
-            "args": "crawl property_spider -a  urls=https://www.facebook.com/marketplace/108107325884650/search/?query=mini --set LOG_LEVEL=DEBUG",
+            "args": "crawl property_spider -a  urls='https://www.facebook.com/marketplace/108107325884650/vehicles'",
+            //"args": "crawl property_spider -a  urls='https://www.facebook.com/marketplace/108107325884650/search/?query=mini'",
             "justMyCode": false
         }
     ]

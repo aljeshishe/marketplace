@@ -101,3 +101,16 @@ class BazarakiDownloaderMiddleware:
 
     def spider_opened(self, spider):
         spider.logger.info("Spider opened: %s" % spider.name)
+
+# myproject/middlewares.py
+from scrapy.downloadermiddlewares.httpcompression import HttpCompressionMiddleware
+
+class LogRequestResponseMiddleware(HttpCompressionMiddleware):
+    def process_request(self, request, spider):
+        spider.logger.info(f"Request Headers: {request.headers}")
+        return None
+
+    def process_response(self, request, response, spider):
+        spider.logger.info(f"Response Headers: {response.headers}")
+        return response
+    

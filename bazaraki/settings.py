@@ -17,7 +17,7 @@ NEWSPIDER_MODULE = "bazaraki.spiders"
 #USER_AGENT = "bazaraki (+http://www.yourdomain.com)"
 
 # Obey robots.txt rules
-ROBOTSTXT_OBEY = True
+ROBOTSTXT_OBEY = False
 
 # Configure maximum concurrent requests performed by Scrapy (default: 16)
 #CONCURRENT_REQUESTS = 32
@@ -31,7 +31,7 @@ CONCURRENT_REQUESTS_PER_DOMAIN = 5
 #CONCURRENT_REQUESTS_PER_IP = 16
 
 # Disable cookies (enabled by default)
-#COOKIES_ENABLED = False
+COOKIES_ENABLED = False
 
 # Disable Telnet Console (enabled by default)
 #TELNETCONSOLE_ENABLED = False
@@ -59,6 +59,10 @@ CONCURRENT_REQUESTS_PER_DOMAIN = 5
 #EXTENSIONS = {
 #    "scrapy.extensions.telnet.TelnetConsole": None,
 #}
+
+# DOWNLOADER_MIDDLEWARES = {
+#     'bazaraki.middlewares.LogRequestResponseMiddleware': 543,
+# }
 
 # Configure item pipelines
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
@@ -97,10 +101,10 @@ import logging
 
 # Scrapy settings for logging  
 LOG_ENABLED = True  
-LOG_LEVEL = 'DEBUG'  # Set the base log level to DEBUG  
+LOG_LEVEL = 'INFO'  # Set the base log level to DEBUG  
 
 # Custom logging configuration  
-LOG_FILE = 'debug.log'  # File to store debug logs  
+# LOG_FILE = 'debug.log'  # File to store debug logs  
 
 # Configure logging  
 from logging.handlers import RotatingFileHandler  

@@ -131,7 +131,7 @@ class PropertySpider(scrapy.Spider):
     def start_requests(self):
         for url in self.start_urls:
             self.logger.info(f"Starting to scrape {url}")
-            yield scrapy.Request(url=url, method="GET", callback=self.parse_start_page, priority=HIGH_PRIO, headers=dict(html_headers), errback=self.error_handler)
+            yield scrapy.Request(url=url, method="GET", callback=self.parse_start_page, priority=HIGH_PRIO, headers=dict(html_headers))
     
     def parse_start_page(self, response: Response):
         """
@@ -215,5 +215,5 @@ class PropertySpider(scrapy.Spider):
         if self.pb:  
             self.pb.close()     
             
-    def error_handler(self, failure):
-        self.logger.error(f"Request failed: {failure.value}")            
+        
+        

@@ -11,7 +11,7 @@ BOT_NAME = "bazaraki"
 
 SPIDER_MODULES = ["bazaraki.spiders"]
 NEWSPIDER_MODULE = "bazaraki.spiders"
-
+HTTPERROR_ALLOW_ALL = True
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 #USER_AGENT = "bazaraki (+http://www.yourdomain.com)"

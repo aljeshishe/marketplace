@@ -137,6 +137,10 @@ class PropertySpider(scrapy.Spider):
         """
         Parse the initial page to find the maximum page number.
         """
+        if response.status != 200:
+            self.logger.error(f"Error fetching {response.url}: {response.status}")
+            return
+        
         scripts = BeautifulSoup(response.text, 'html.parser').find_all('script')
         found_scripts = [script for script in scripts if re.search("formatted_amount", script.string or "")]
         assert len(found_scripts) == 1, f"Expected to find exactly one script with formatted_amount, but found {len(found_scripts)}"
@@ -165,6 +169,10 @@ class PropertySpider(scrapy.Spider):
         return scrapy.Request(url="https://www.facebook.com/api/graphql", method="POST", callback=self.parse_list_page, priority=HIGH_PRIO, headers=json_headers, body=get_request_body(cursor))
 
     def parse_list_page(self, response):
+        if response.status != 200:
+            self.logger.error(f"Error fetching {response.url}: {response.status}")
+            return
+        
         try:
             data = json.loads(response.text)
 
@@ -186,6 +194,10 @@ class PropertySpider(scrapy.Spider):
         """
         Parse a single page for property listings.
         """
+        if response.status != 200:
+            self.logger.error(f"Error fetching {response.url}: {response.status}")
+            return
+        
         try:
             soup = BeautifulSoup(response.text, 'html.parser')
             scripts = soup.find_all('script')

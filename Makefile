@@ -1,6 +1,6 @@
 .PHONY: crawl
 crawl:
-	scrapy crawl property_spider -a  urls=https://www.bazaraki.com/real-estate-to-rent,https://www.bazaraki.com/real-estate-for-sale
+	scrapy crawl property_spider -a  urls=https://www.facebook.com/marketplace/108107325884650/search/?query=mini
 
 
 .PHONY: fast

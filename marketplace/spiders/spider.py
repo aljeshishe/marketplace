@@ -134,18 +134,19 @@ class Spider(scrapy.Spider):
         """
         if response.status != 200:
             self.logger.error(f"Error fetching {response.url}: {response.status}")
-            return
+            return None
         
         scripts = BeautifulSoup(response.text, 'html.parser').find_all('script')
         found_scripts = [script for script in scripts if re.search("formatted_amount", script.string or "")]
         assert len(found_scripts) == 1, f"Expected to find exactly one script with formatted_amount, but found {len(found_scripts)}"
         data = json.loads(found_scripts[0].string)
-        if "search" in response.url:
-            edges = data["require"][0][3][0]["__bbox"]["require"][0][3][1]["__bbox"]["result"]["data"]["marketplace_search"]["feed_units"]["edges"]
-            page_info = data["require"][0][3][0]["__bbox"]["require"][0][3][1]["__bbox"]["result"]["data"]["marketplace_search"]["feed_units"]["page_info"]
+        results = data["require"][0][3][0]["__bbox"]["require"][0][3][1]["__bbox"]["result"]
+        if self.is_search:
+            edges = results["data"]["marketplace_search"]["feed_units"]["edges"]
+            page_info = results["data"]["marketplace_search"]["feed_units"]["page_info"]
         else:
-            edges = data["require"][0][3][0]["__bbox"]["require"][0][3][1]["__bbox"]["result"]["data"]["viewer"]["marketplace_feed_stories"]["edges"]
-            page_info = data["require"][0][3][0]["__bbox"]["require"][0][3][1]["__bbox"]["result"]["data"]["viewer"]["marketplace_feed_stories"]["page_info"]
+            edges = results["data"]["viewer"]["marketplace_feed_stories"]["edges"]
+            page_info = results["data"]["viewer"]["marketplace_feed_stories"]["page_info"]
 
         if page_info["has_next_page"]:
             yield self.list_page_request(cursor=page_info["end_cursor"])
@@ -161,7 +162,7 @@ class Spider(scrapy.Spider):
     def on_list_page_response(self, response):
         if response.status != 200:
             self.logger.error(f"Error fetching {response.url}: {response.status}")
-            return
+            return None
         
         text = response.text
         if (end_pos := text.find('{"label"')) != -1:
@@ -185,17 +186,6 @@ class Spider(scrapy.Spider):
             else:
                 self.logger.debug(f"Skipping edge without listing: {edge}")
                 
-        #             if not self.fast:
-        #     cursor = data["data"]["marketplace_search"]["feed_units"]["page_info"]["end_cursor"]
-        #     yield self.list_page_request(cursor=cursor)
-
-
-        # edges = data["data"]["marketplace_search"]["feed_units"]["edges"]
-        # for edge in edges:
-        #     if "listing" in edge["node"]:
-        #         yield self.ad_page_request(id=edge["node"]["story_key"] )
-        #     else:
-        #         self.logger.debug(f"Skipping edge without listing: {edge}")
         
     def ad_page_request(self, id):            
         if self.fast and self.pb.total > 3:
@@ -296,69 +286,3 @@ doc_id=9227006374013884'''
             result.append(f"{key}={value}")
         data = "&".join(result)
         return data        
-
-#     def get_request_body(self, cursor=None):
-#         if self.is_search:
-#             data_str = r'''av=100001857951275
-# __aaid=0
-# __user=100001857951275
-# __a=1
-# __req=2q
-# __hs=20140.HYP:comet_pkg.2.1...1
-# dpr=2
-# __ccg=EXCELLENT
-# __rev=1020291413
-# __s=0n84gz:g2shdo:ykyd8l
-# __hsi=7473921568831925931
-# __dyn=7xeXzWK2l2o8ong569yaxG4Qih0noeEb8nwgUaqwYxebzEdF8vyUco2qwJyEiw9-1DwUx60xU8E3Qwb-q7oc81EEc87m2210wEwgo9oO0wE3Jx62G5Usw9m1cwLwBgK7o8o4u0Mo4G1hx-3m1mzXw8W58jwGzEjxq1jxS6Fobrwh8lwqUW4-5pUfEe88o4qum7-2K0-obUG2-azqwaW1jg2cwMwhU9UK2K2WEjxK2B08-269wqQ1FwgU4q3Gfw-KufxamEbbxG1fBG2-2K0UE62
-# __csr=gT4hAI8NAvkai88nstfNYG48ABibf4vP8IOlNJjs_nJ_r98JHpldItQVbrhpALuIJEDqhdWaLTIiSFaFGHmQurBArJGlkiRYyWyuniB_KC8KHiGGt5AGEDUHBFuvGbJkFd_xeuHVolhbyfnHHUSH-V4Vt4CUKmVby99FieehWyFXBKVkQly9efUGRKaByKFprxiijF6kF8kG5oCfyaG8ybx3F38C8V-iqdzoCay8jBx6bUGi9yFAHWK7HBKq3y6aDXyUSinmUlrg8EzKi8hUxoizEyhxibylAGcxq48DBCQm6aGi2quA9z8O5F8O5UnzEmzX9wgA8DzUB0zDK9x24_UsG6KqEkzo-3iEqCxG2OcyUky8y6pWBVoy8UiDGQjz8d8G5U4O78Oim2-2WbwoopxWlAwIw9h1GdAwWwhA6ECdVo8WwBwwzVAvyEG1cgGdo27wqucwwwuGAByE5qUTg9k1KoyegnxN0MDxkwb8jg8UKuenx-8gb8dUiwIwKwJghAK1swxGU2NK0AU8UdVEswJgkwBx22648nBAg5e2Oax65Dzo-EJpGy426fDw_yVbU-fLCAvBxt2E8rgkUcU5O1PAwAyRh9FrxOawUx6vGAEGU4Om1cDwSzocEG14g5LhkA2u4U5e4US5-7U9o9U940esw1N22q1uG0q-eovy81684p4ExeiueU0lUw7Xg0Ye04rXaEhgGtOq41_g07C-0cnwae0SWggwGgbkzN008gE0uZK0jww0Ajw6KxW2Ewf8gw8h0a6OUc83UCU1pVng20wfKqvG1Mw2181epm0SUfEb83Bo3Jwww4Tw9O0ge1ax91glxe8wJwSiwDw9C6A5ElQ0nbUpwbi17hnwn-0fuzoy2l0aWjwYwxQRgjoF2pk0EqPPG4AOeQPL40kEpgqjxei4rweGt2Faw4zgWFnw4dwPoS58pwDw7kxe1dwaMyDgGOwkE3AHwbi0YE0hSw20-0RA3zKE0o4wlo0g9w9ME4O0WUdoeU7W481L409Kw6zBo0RW8gGgw1ao3L7d2FmVZwRw64wzwVw4Oxi
-# __comet_req=15
-# fb_dtsg=NAcMwhELQ4vWr5mhXVbAnvaDZJQBk0cE9LRPnnsAqeVWvCFRYgTxgEw:13:1740157882
-# jazoest=25614
-# lsd=N_xts8VssWuhwA4lq6B3Ua
-# __spin_r=1020291413
-# __spin_b=trunk
-# __spin_t=1740157969
-# fb_api_caller_class=RelayModern
-# fb_api_req_friendly_name=CometMarketplaceSearchContentPaginationQuery
-# variables={"count":24,"cursor":"__CURSOR__","params":{"bqf":{"callsite":"COMMERCE_MKTPLACE_WWW","query":"mini"},"browse_request_params":{"commerce_enable_local_pickup":true,"commerce_enable_shipping":true,"commerce_search_and_rp_available":true,"commerce_search_and_rp_category_id":[],"commerce_search_and_rp_condition":null,"commerce_search_and_rp_ctime_days":null,"filter_location_latitude":34.675,"filter_location_longitude":33.0333,"filter_price_lower_bound":0,"filter_price_upper_bound":214748364700,"filter_radius_km":100},"custom_request_params":{"browse_context":null,"contextual_filters":[],"referral_code":null,"saved_search_strid":null,"search_vertical":"C2C","seo_url":null,"surface":"SEARCH","virtual_contextual_filters":[]}},"scale":2}
-# server_timestamps=true
-# doc_id=9423540494371697'''
-#         else:            
-#             # vehicles
-#             data_str = r'''av=100001857951275
-# __aaid=0
-# __user=100001857951275
-# __a=1
-# __req=21
-# __hs=20140.HYP:comet_pkg.2.1...1
-# dpr=2
-# __ccg=EXCELLENT
-# __rev=1020289932
-# __s=xrkcik:vkys53:95wxbi
-# __hsi=7473910646281513785
-# __dyn=7xeXzWK1ixt0mUyEqxemh0noeEb8nwgUaqwk8KewSAx-bwNw9G2Sawba1DwUx60GE3Qwb-q7oc81EEc87m2210wEwgo9oO0n24oaEnxO0Bo7O2l2Utwqo31wiE567Udo5qfK0zEkxe2GewGwkUtxGm2SU4i5o7G4-5pUfEe88o4Wm7-2K0-obUG2-azqwaW1jg2cwMwrUK2K2WEjxK2B08-269wqQ1FwgUjwOwWzUfHDzUiBG2OUqwjVqwLwHwea1ww
-# __csr=gT4hAbNAvkai888T6jYvax299kyPN7ZmyPfsrkT49pBZIAySJCTmNlZeiSQmpbTHlmytFL-DHZX4bqAGCmqQurBBjJGlkiWKFayungHXGaKuFqvAABy-aVqnDWx3iA_-bzWKu9z4uaQUCUW_zpt2_ybG8KdCBmUV7GaDK5bp4ex7yF8gByK8Km4Vp94piAxiEux2bG8BxvF38iyuagrxi8xe5ULyF8C4k7E-9BwlGDXyUkBmdgFAwHxiu2S8CwFuieg9UCEKU89U9FWyEc98sDzVUW5F8Uw4W5UGdwxwQy8uxiqE8ogw_wAwh98boux3xu7XBzEppUcU7qim1ow8S3y2ObwuV86i08pwqU-7o19k0Eo4W1xglwGyC7ox124ACE1sE5W1mwMwcC0xEcEgypQQmhwkEb8G4omu7qyRCGhm0ILyasjeax23LwpU36xKm2m0VUcUdES0wA0-ojzo5-2u2i07PU0JPg0zu3202fC0fpw0e660e6w7U80QA0Erbw4FCU1YUow5DwkU1I81KU521fwIweu096w6ww40iwDw2mfxC0_4lU5_wjU0kvw6pxm069E0I60YE0dCU5m08vg0Ll0Ww924o8UeU7W480ngBo0xC0abw4oDS0rG2e3C0ku
-# __comet_req=15
-# fb_dtsg=NAcPK-AoBJ7Kne4uU07hih3sApDD3VwBFfI0OXZo8ybbifEJpZ9vrjg:4:1740155364
-# jazoest=25338
-# lsd=FwZHx_IfpldC3F0zFTYgya
-# __spin_r=1020289932
-# __spin_b=trunk
-# __spin_t=1740155426
-# fb_api_caller_class=RelayModern
-# fb_api_req_friendly_name=CometMarketplaceCategoryContentPaginationQuery
-# variables={"buyLocation":{"latitude":34.675,"longitude":33.0333},"categoryIDArray":[807311116002614],"count":10,"cursor":"__CURSOR__","filterSortingParams":null,"marketplaceBrowseContext":"CATEGORY_FEED","marketplaceID":null,"numericVerticalFields":[],"numericVerticalFieldsBetween":[],"priceRange":[0,214748364700],"radius":100000,"scale":2,"sellerID":null,"stringVerticalFields":[]}
-# server_timestamps=true
-# doc_id=9227006374013884'''
-
-#         if cursor is not None:
-#             data_str = data_str.replace("__CURSOR__", cursor.replace('"', r'\"'))
-            
-#         result = []
-#         for line in data_str.split("\n"):
-#             key, value = line.split("=")
-#             value = urllib.parse.quote(value)
-#             result.append(f"{key}={value}")
-#         data = "&".join(result)
-#         return data                
